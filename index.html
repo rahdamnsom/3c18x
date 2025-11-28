@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3c18x</title>
+   
+    <!-- Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+   
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+   
+    <!-- Icons: Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+   
+    <!-- Markdown Parser: Marked -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        black: '#050505',
+                        white: '#ffffff',
+                        offwhite: '#fafafa',
+                        gray: {
+                            50: '#f9fafb',
+                            100: '#f3f4f6',
+                            200: '#e5e7eb',
+                            300: '#d1d5db',
+                            800: '#1f2937',
+                            900: '#111827',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'pulse-subtle': 'pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.99)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' }
+                        },
+                        pulseSubtle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.7' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        /* Typography */
+        .prose p { margin-bottom: 0.75em; line-height: 1.7; }
+        .prose ul { list-style-type: disc; padding-left: 1.2em; margin-bottom: 0.75em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.2em; margin-bottom: 0.75em; }
+        .prose code { background-color: #f3f4f6; padding: 0.2em 0.4em; border-radius: 0.25em; font-size: 0.85em; font-family: 'JetBrains Mono', monospace; color: #111827; }
+        .prose pre { background-color: #111827; color: #fff; padding: 1em; border-radius: 0.75em; overflow-x: auto; margin-bottom: 1em; border: 1px solid #374151; }
+        .prose pre code { background-color: transparent; color: inherit; padding: 0; font-size: 0.85em; }
+        .prose strong { font-weight: 600; color: #000; }
+        .prose a { color: #000; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+        .prose h1, .prose h2, .prose h3 { font-weight: 700; color: #000; margin-top: 1.5em; margin-bottom: 0.5em; letter-spacing: -0.02em; }
+        .prose blockquote { border-left: 2px solid #e5e7eb; padding-left: 1rem; font-style: italic; color: #4b5563; }
+        /* Thinking Block */
+        .thought-process-container {
+            position: relative;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+       
+        /* Shimmer Effect for Thinking Label */
+        .thinking-shimmer {
+            background: linear-gradient(90deg, #9ca3af 0%, #000 50%, #9ca3af 100%);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+        }
+        /* Loading Dots (kept for fallback) */
+        .dot-flashing {
+            position: relative;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #000;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: 0.5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: "";
+            display: inline-block;
+            position: absolute;
+            top: 0;
+        }
+        /* ... dot flashing keyframes ... */
+    </style>
+</head>
+<body class="bg-[#f2f2f2] h-screen w-full flex overflow-hidden text-black font-sans selection:bg-black selection:text-white">
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white border border-gray-200 shadow-2xl rounded-3xl w-full max-w-2xl h-auto max-h-[90vh] flex flex-col overflow-hidden animate-fade-in">
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                <h2 class="text-2xl font-bold tracking-tight">Workspace Settings</h2>
+                <button onclick="toggleSettings(false)" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-8 space-y-8 bg-white">
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-1">API Authentication</h3>
+                        <p class="text-gray-500 text-sm">Configure your Google Gemini API key to access 3c18x intelligence.</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Google API Key</label>
+                        <div class="flex gap-3">
+                            <!-- Removed focus styles here -->
+                            <input type="password" id="settingsApiKeyInput" placeholder="AIzaSy..."
+                                class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none transition-all font-mono text-sm">
+                            <button onclick="saveSettingsKey()" class="bg-black text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors whitespace-nowrap shadow-lg shadow-black/10">
+                                Save Key
+                            </button>
+                        </div>
+                        <p class="mt-3 text-xs text-gray-400 flex items-center gap-1">
+                            <i data-lucide="lock" class="w-3 h-3"></i> stored securely in your browser's local storage.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Main Layout -->
+    <div class="flex w-full h-full p-3 md:p-4 gap-4">
+       
+        <!-- Sidebar -->
+        <aside id="sidebar" class="hidden md:flex flex-col w-72 bg-white rounded-[2rem] shadow-sm border border-gray-200 h-full p-6 z-10 transition-all duration-300 relative flex-shrink-0">
+           
+            <!-- Collapse Button -->
+            <button id="collapseBtn" onclick="toggleSidebar()" class="absolute -right-3 top-6 p-1.5 bg-black text-white rounded-full shadow-lg border-4 border-[#f2f2f2] z-20 hover:scale-105 transition-transform duration-300">
+                <i data-lucide="chevron-left" class="w-4 h-4 transition-transform duration-300" id="collapseIcon"></i>
+            </button>
+            <!-- Brand -->
+            <div class="flex items-center justify-start mb-8 px-1">
+                <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white shadow-md flex-shrink-0">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4H20V20H4V4Z" stroke="white" stroke-width="2"/>
+                        <path d="M15 9L9 15" stroke="white" stroke-width="2"/>
+                        <path d="M9 9L15 15" stroke="white" stroke-width="2"/>
+                    </svg>
+                </div>
+                <span class="font-bold text-xl tracking-tighter select-none ml-3 sidebar-text">3c18x</span>
+            </div>
+            <button onclick="clearChat()" class="w-full flex items-center gap-3 px-4 py-3.5 bg-black text-white rounded-2xl hover:bg-gray-900 hover:scale-[1.02] active:scale-[0.98] transition-all mb-8 shadow-lg shadow-black/10 group">
+                <i data-lucide="plus" class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300 flex-shrink-0"></i>
+                <span class="font-medium sidebar-text">New Thread</span>
+            </button>
+            <div class="space-y-1 mb-6">
+                <button class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-xl bg-gray-100 text-black">
+                    <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0"></i>
+                    <span class="sidebar-text">Recent Chats</span>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-2 space-y-1" id="historyContainer">
+                <!-- History items rendered here -->
+            </div>
+            <div class="mt-auto pt-4 border-t border-gray-100">
+                <button onclick="toggleSettings(true)" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-300 border border-gray-200 flex-shrink-0"></div>
+                    <div class="flex-1 text-left sidebar-text">
+                        <div class="text-sm font-semibold text-gray-900 group-hover:text-black">Settings</div>
+                        <div class="text-xs text-gray-400">Configure API</div>
+                    </div>
+                    <i data-lucide="settings-2" class="w-4 h-4 text-gray-400 group-hover:rotate-45 transition-transform duration-500 flex-shrink-0 sidebar-text"></i>
+                </button>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <main id="mainContent" class="flex-1 flex flex-col h-full relative bg-white rounded-[2rem] shadow-sm border border-gray-200 overflow-hidden">
+           
+            <!-- Top Navigation (Cleaned up) -->
+            <div class="h-16 border-b border-gray-100 flex items-center justify-end px-6 bg-white/80 backdrop-blur-md z-20 absolute top-0 w-full">
+                <!-- Removed "Workspace" text -->
+            </div>
+            <!-- Chat Container -->
+            <div id="chatContainer" class="flex-1 overflow-y-auto px-4 md:px-12 pt-24 pb-48 scroll-smooth w-full max-w-5xl mx-auto">
+               
+                <!-- Welcome State -->
+                <div id="welcomeState" class="flex flex-col items-center justify-center h-full text-center space-y-8 animate-fade-in opacity-0" style="animation-delay: 0.1s; animation-fill-mode: forwards;">
+                    <div class="w-20 h-20 bg-black text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3 hover:rotate-0 transition-transform duration-500">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4H20V20H4V4Z" stroke="white" stroke-width="2"/>
+                            <path d="M15 9L9 15" stroke="white" stroke-width="2"/>
+                            <path d="M9 9L15 15" stroke="white" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-2 max-w-md">
+                        <h1 class="text-3xl font-bold tracking-tight text-black">Welcome to 3c18x</h1>
+                        <p class="text-gray-500 text-lg leading-relaxed">Your advanced design companion with reasoning capabilities.</p>
+                    </div>
+                   
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-8">
+                        <button onclick="setInput('Analyze this UI for accessibility issues')" class="p-5 text-left bg-gray-50 hover:bg-white hover:shadow-lg border border-gray-100 rounded-2xl transition-all group">
+                            <div class="bg-white w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 mb-3 group-hover:scale-110 transition-transform">
+                                <i data-lucide="eye" class="w-4 h-4 text-black"></i>
+                            </div>
+                            <div class="font-semibold text-sm">UI Audit</div>
+                            <div class="text-xs text-gray-400 mt-1">Check accessibility & contrast</div>
+                        </button>
+                         <button onclick="setInput('Generate a color palette based on Swiss Style')" class="p-5 text-left bg-gray-50 hover:bg-white hover:shadow-lg border border-gray-100 rounded-2xl transition-all group">
+                            <div class="bg-white w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 mb-3 group-hover:scale-110 transition-transform">
+                                <i data-lucide="palette" class="w-4 h-4 text-black"></i>
+                            </div>
+                            <div class="font-semibold text-sm">Swiss Palette</div>
+                            <div class="text-xs text-gray-400 mt-1">Generate minimalist colors</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Input Area (Floating) -->
+            <div class="absolute bottom-0 left-0 w-full px-4 pb-6 pt-10 bg-gradient-to-t from-white via-white to-transparent z-30">
+                <div class="max-w-3xl mx-auto relative">
+                   
+                    <!-- File Preview Area -->
+                    <div id="filePreview" class="hidden absolute bottom-full left-0 mb-3 bg-white p-3 rounded-2xl shadow-xl border border-gray-100 flex items-center gap-3 animate-fade-in z-10 w-64">
+                        <div id="fileIconContainer" class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                            <!-- Preview Injected Here -->
+                        </div>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <span id="fileName" class="text-xs font-bold text-black truncate">filename.png</span>
+                            <span id="fileTypeLabel" class="text-[10px] text-gray-400 uppercase tracking-wide">Image</span>
+                        </div>
+                        <button onclick="clearAttachment()" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                            <i data-lucide="x" class="w-3.5 h-3.5 text-gray-500"></i>
+                        </button>
+                    </div>
+                    <!-- Input Box -->
+                    <div class="bg-white border border-gray-200 rounded-[1.5rem] shadow-[0_8px_40px_rgba(0,0,0,0.08)] p-2 transition-all duration-300 focus-within:ring-2 focus-within:ring-black/5 focus-within:border-gray-300 relative group">
+                       
+                        <!-- Tool Toggles -->
+                        <div class="flex items-center gap-1 px-3 py-2 border-b border-gray-50 mb-1">
+                             <button id="thinkingToggle" onclick="toggleTool('thinking')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-black bg-gray-100 transition-colors border border-gray-200" title="Enable Reasoning">
+                                <i data-lucide="brain-circuit" class="w-3 h-3"></i>
+                                Thinking
+                            </button>
+                            <div class="w-px h-3 bg-gray-200 mx-1"></div>
+                            <button id="searchToggle" onclick="toggleTool('search')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
+                                <i data-lucide="globe" class="w-3 h-3"></i>
+                                Web
+                            </button>
+                            <button id="urlToggle" onclick="toggleTool('url')" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
+                                <i data-lucide="link" class="w-3 h-3"></i>
+                                Context
+                            </button>
+                        </div>
+                        <div class="flex items-end gap-2 pl-3 pb-1">
+                            <!-- File Attachment Button -->
+                            <button onclick="document.getElementById('fileInput').click()" class="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-xl transition-colors mb-1" title="Attach file">
+                                <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            </button>
+                            <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf,audio/*" onchange="handleFileSelect(event)">
+                            <textarea id="promptInput" rows="1" placeholder="Ask anything..." class="w-full py-3 bg-transparent text-sm focus:outline-none resize-none max-h-48 placeholder:text-gray-400 font-medium leading-relaxed font-sans"></textarea>
+                           
+                            <!-- Updated Send Button -->
+                            <button onclick="sendMessage()" id="sendBtn" class="mb-1 mr-1 p-4 bg-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg hover:shadow-black/20 flex items-center justify-center">
+                                <i data-lucide="arrow-up" class="w-5 h-5 text-white stroke-[3px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                   
+                    <!-- Model Selector (Relocated) -->
+                    <div class="text-center mt-3">
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="text-[10px] text-gray-400 font-medium">3c18x Intelligence •</span>
+                           
+                            <div class="relative">
+                                <button id="modelSelectorBtn" onclick="toggleModelDropdown()" class="flex items-center gap-1 text-[10px] font-bold text-gray-500 hover:text-black transition-colors">
+                                    <span id="currentModelLabel">gemini-3-pro-preview</span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3 text-gray-400 transition-transform" id="modelChevron"></i>
+                                </button>
+                               
+                                <div id="modelDropdown" class="hidden absolute right-0 bottom-full mb-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-1.5 z-50 transform origin-bottom-right transition-all animate-fade-in">
+                                    <div class="px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Model</div>
+                                    <button onclick="selectModel('gemini-3-pro-preview')" class="w-full text-left px-3 py-2.5 text-xs font-medium rounded-lg hover:bg-gray-50 flex items-center justify-between group">
+                                        <span>gemini-3-pro-preview</span>
+                                        <i data-lucide="check" class="w-3 h-3 opacity-100 text-black"></i>
+                                    </button>
+                                    <button onclick="selectModel('gemini-2.5-flash')" class="w-full text-left px-3 py-2.5 text-xs font-medium rounded-lg hover:bg-gray-50 flex items-center justify-between group">
+                                        <span>gemini-2.5-flash</span>
+                                        <i data-lucide="check" class="w-3 h-3 opacity-0 group-hover:opacity-50"></i>
+                                    </button>
+                                     <button onclick="selectModel('gemini-2.5-flash-lite')" class="w-full text-left px-3 py-2.5 text-xs font-medium rounded-lg hover:bg-gray-50 flex items-center justify-between group">
+                                        <span>gemini-2.5-flash-lite</span>
+                                        <i data-lucide="check" class="w-3 h-3 opacity-0 group-hover:opacity-50"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Scripts -->
+    <script>
+        // --- Configuration ---
+        let API_KEY = localStorage.getItem('3c18x_api_key') || "";
+        let selectedModelLabel = "gemini-3-pro-preview";
+        // Map to the reliable model that supports thinking + files + streaming
+        const MODEL_ID = "gemini-2.5-flash"; // Using a general reliable model
+       
+        let activeTools = {
+            search: false,
+            url: false,
+            thinking: true
+        };
+        let currentAttachment = null; // { mimeType, data (base64) }
+        // History storage
+        let chatHistory = JSON.parse(localStorage.getItem('3c18x_history')) || [];
+        const MAX_HISTORY = 10;
+        let currentThreadId = null;
+        // --- Initialization ---
+        lucide.createIcons();
+        if (!API_KEY) toggleSettings(true);
+        renderHistory();
+       
+        // --- History Management ---
+        function saveHistory() {
+            localStorage.setItem('3c18x_history', JSON.stringify(chatHistory.slice(0, MAX_HISTORY)));
+            renderHistory();
+        }
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            if (!container) return;
+            container.innerHTML = '';
+           
+            chatHistory.forEach(item => {
+                const div = document.createElement('button');
+                div.className = 'w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 transition-colors';
+                div.innerHTML = `
+                    <i data-lucide="message-square" class="w-4 h-4 flex-shrink-0"></i>
+                    <span class="truncate text-left flex-1 sidebar-text">${item.title}</span>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+        function startNewThread(prompt) {
+            if (currentThreadId !== null) return; // Only start a new thread if one isn't active
+            const newThread = {
+                id: Date.now(),
+                title: prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt,
+                timestamp: new Date().toISOString(),
+            };
+            chatHistory.unshift(newThread);
+            currentThreadId = newThread.id;
+            saveHistory();
+        }
+        // --- UI Handlers ---
+        function toggleSettings(show) {
+            const modal = document.getElementById('settingsModal');
+            if (show) {
+                modal.classList.remove('hidden');
+                document.getElementById('settingsApiKeyInput').value = API_KEY;
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+        function saveSettingsKey() {
+            const input = document.getElementById('settingsApiKeyInput');
+            const key = input.value.trim();
+            if (key) {
+                API_KEY = key;
+                localStorage.setItem('3c18x_api_key', key);
+                toggleSettings(false);
+            }
+        }
+        let isModelDropdownOpen = false;
+        function toggleModelDropdown() {
+            const dd = document.getElementById('modelDropdown');
+            const chevron = document.getElementById('modelChevron');
+            isModelDropdownOpen = !isModelDropdownOpen;
+            dd.classList.toggle('hidden', !isModelDropdownOpen);
+            chevron.classList.toggle('rotate-180', isModelDropdownOpen);
+        }
+        function selectModel(label) {
+            selectedModelLabel = label;
+            document.getElementById('currentModelLabel').innerText = label;
+            toggleModelDropdown();
+        }
+        // Close dropdown on outside click
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('modelSelectorBtn');
+            const dd = document.getElementById('modelDropdown');
+            if (dd && !btn.contains(e.target) && !dd.contains(e.target) && isModelDropdownOpen) {
+                toggleModelDropdown();
+            }
+        });
+        function toggleTool(tool) {
+            activeTools[tool] = !activeTools[tool];
+            const btn = document.getElementById(tool + 'Toggle');
+            if (activeTools[tool]) {
+                btn.classList.remove('text-gray-400');
+                btn.classList.add('text-black', 'bg-gray-100', 'border-gray-200');
+            } else {
+                btn.classList.add('text-gray-400');
+                btn.classList.remove('text-black', 'bg-gray-100', 'border-gray-200');
+            }
+        }
+        // Textarea auto-expand
+        const textarea = document.getElementById('promptInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 192) + 'px';
+        });
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        function setInput(text) {
+            textarea.value = text;
+            textarea.style.height = 'auto';
+            textarea.focus();
+        }
+        // --- Sidebar Collapse ---
+        let isSidebarCollapsed = false;
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('collapseIcon');
+            const textElements = document.querySelectorAll('.sidebar-text');
+           
+            isSidebarCollapsed = !isSidebarCollapsed;
+            if (isSidebarCollapsed) {
+                sidebar.classList.remove('w-72', 'p-6');
+                sidebar.classList.add('w-20', 'p-4');
+                icon.classList.add('rotate-180');
+                textElements.forEach(el => el.classList.add('hidden'));
+            } else {
+                sidebar.classList.remove('w-20', 'p-4');
+                sidebar.classList.add('w-72', 'p-6');
+                icon.classList.remove('rotate-180');
+                textElements.forEach(el => el.classList.remove('hidden'));
+            }
+            lucide.createIcons();
+        }
+        // --- File Handling (Unchanged) ---
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 20 * 1024 * 1024) {
+                alert("File too large. Max 20MB supported.");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64Data = e.target.result.split(',')[1];
+                currentAttachment = {
+                    mimeType: file.type,
+                    data: base64Data,
+                    name: file.name
+                };
+                showFilePreview(file);
+            };
+            reader.readAsDataURL(file);
+        }
+        function showFilePreview(file) {
+            const container = document.getElementById('filePreview');
+            const iconContainer = document.getElementById('fileIconContainer');
+            const nameEl = document.getElementById('fileName');
+            const typeEl = document.getElementById('fileTypeLabel');
+           
+            container.classList.remove('hidden');
+            nameEl.innerText = file.name;
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'w-full h-full object-cover';
+                iconContainer.innerHTML = '';
+                iconContainer.appendChild(img);
+                typeEl.innerText = "IMAGE";
+            } else if (file.type === 'application/pdf') {
+                iconContainer.innerHTML = '<i data-lucide="file-text" class="w-5 h-5 text-red-500"></i>';
+                typeEl.innerText = "PDF";
+            } else if (file.type.startsWith('audio/')) {
+                iconContainer.innerHTML = '<i data-lucide="mic" class="w-5 h-5 text-blue-500"></i>';
+                typeEl.innerText = "AUDIO";
+            } else {
+                iconContainer.innerHTML = '<i data-lucide="file" class="w-5 h-5 text-gray-500"></i>';
+                typeEl.innerText = "FILE";
+            }
+            lucide.createIcons();
+        }
+        function clearAttachment() {
+            currentAttachment = null;
+            document.getElementById('filePreview').classList.add('hidden');
+            document.getElementById('fileInput').value = '';
+        }
+        // --- Chat Logic & Streaming ---
+        function clearChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            const welcomeState = document.getElementById('welcomeState');
+           
+            // Clear all children
+            chatContainer.innerHTML = '';
+           
+            // Re-append the welcome state and make it visible
+            if (welcomeState) {
+                chatContainer.appendChild(welcomeState);
+                welcomeState.classList.remove('hidden', 'opacity-0');
+                welcomeState.style.opacity = '1';
+            }
+            currentThreadId = null; // Reset thread ID
+            renderHistory(); // Refresh history display if needed
+        }
+        async function sendMessage() {
+            const text = textarea.value.trim();
+            if (!text && !currentAttachment) return;
+           
+            if (!API_KEY) {
+                toggleSettings(true);
+                return;
+            }
+            // Start new thread if necessary (for history)
+            startNewThread(text);
+            // Prepare UI
+            const welcomeState = document.getElementById('welcomeState');
+            if (welcomeState) welcomeState.classList.add('hidden');
+           
+            textarea.value = '';
+            textarea.style.height = 'auto';
+           
+            // User Message
+            appendUserMessage(text, currentAttachment);
+           
+            const attachmentToSend = currentAttachment;
+            clearAttachment();
+           
+            const includeThinking = activeTools.thinking || activeTools.search || activeTools.url;
+            // Create AI Message Container (Streaming Target)
+            const { thoughtDiv, contentDiv, thinkingContainer, msgDiv } = createAIMessagePlaceholder({
+                includeThinking,
+                searchEnabled: activeTools.search
+            });
+            scrollToBottom();
+            try {
+                await streamGeminiResponse(text, attachmentToSend, { thoughtDiv, contentDiv, thinkingContainer });
+            } catch (err) {
+                msgDiv.innerHTML = `
+                    <div class="flex gap-5 max-w-[95%] md:max-w-[85%] w-full">
+                         <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm mt-1">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 4H20V20H4V4Z" stroke="black" stroke-width="2"/>
+                                <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                                <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                                <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                                API Error: ${err.message || "An unknown error occurred."}. Check your API key in settings.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+        function appendUserMessage(text, attachment) {
+            const div = document.createElement('div');
+            div.className = 'flex w-full justify-end animate-slide-up mb-8';
+           
+            let attachmentHTML = '';
+            if (attachment) {
+                if (attachment.mimeType.startsWith('image/')) {
+                    attachmentHTML = `<img src="data:${attachment.mimeType};base64,${attachment.data}" class="max-w-[240px] rounded-xl mb-3 border border-gray-700/50">`;
+                } else {
+                     attachmentHTML = `
+                        <div class="bg-gray-800/50 backdrop-blur-sm border border-white/10 text-white p-3 rounded-xl mb-3 text-xs flex items-center gap-3 max-w-[240px]">
+                            <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center"><i data-lucide="file" class="w-4 h-4"></i></div>
+                            <div class="truncate font-mono">${attachment.name}</div>
+                        </div>`;
+                }
+            }
+            lucide.createIcons();
+            // Adjusted bubble sizing: removed fixed max-width on content div, rely on flex container
+            div.innerHTML = `
+                <div class="flex flex-col items-end max-w-[85%] md:max-w-[70%]">
+                    <div class="bg-black text-white px-6 py-4 rounded-[1.5rem] rounded-tr-sm shadow-lg text-[15px] leading-relaxed font-sans w-fit">
+                        ${attachmentHTML}
+                        ${text ? text.replace(/\n/g, '<br>') : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('chatContainer').appendChild(div);
+            lucide.createIcons();
+        }
+        function createAIMessagePlaceholder(config) {
+            const div = document.createElement('div');
+            div.className = 'flex w-full justify-start animate-slide-up mb-8';
+            const id = 'msg-' + Date.now();
+            div.id = id;
+            const thinkingStatusText = config.searchEnabled ? 'Search in Progress...' : 'Thinking Process';
+            const thinkingStatusIcon = config.searchEnabled ? '<i data-lucide="globe" class="w-3 h-3 text-yellow-500 animate-pulse"></i>' : '<i data-lucide="sparkles" class="w-3 h-3 group-hover:text-yellow-500 transition-colors animate-pulse"></i>';
+            const initialThoughtContent = config.searchEnabled
+                ? '<div class="flex items-center gap-2 text-gray-400"><i data-lucide="search" class="w-4 h-4 animate-pulse"></i><span>Initiating Google Search...</span></div>'
+                : '<!-- Thoughts stream here -->';
+            div.innerHTML = `
+                 <div class="flex gap-5 max-w-[95%] md:max-w-[85%] w-full">
+                    <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm mt-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 4H20V20H4V4Z" stroke="black" stroke-width="2"/>
+                            <path d="M15 9L9 15" stroke="black" stroke-width="2"/>
+                            <path d="M9 9L15 15" stroke="black" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0 space-y-2">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold text-gray-900">${selectedModelLabel}</span>
+                        </div>
+                       
+                        <!-- Thinking Container -->
+                        <div id="thinking-${id}" class="${config.includeThinking ? 'block' : 'hidden'}">
+                            <div class="thought-process-container">
+                                <button onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.chevron').classList.toggle('rotate-180')" class="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-black transition-colors mb-2 group w-full text-left">
+                                    ${thinkingStatusIcon}
+                                    <span class="${config.searchEnabled ? 'text-gray-500 font-medium' : 'thinking-shimmer'}">${thinkingStatusText}</span>
+                                    <i data-lucide="chevron-down" class="w-3 h-3 opacity-50 transition-transform chevron"></i>
+                                </button>
+                                <div id="thoughts-${id}" class="${config.searchEnabled ? 'block' : 'hidden'} text-xs text-gray-500 bg-gray-50 p-4 rounded-xl border border-gray-100 font-mono leading-relaxed overflow-x-auto max-h-64 overflow-y-auto custom-scrollbar">
+                                    ${initialThoughtContent}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Final Content -->
+                        <div id="content-${id}" class="prose prose-sm prose-p:text-gray-800 prose-headings:text-black max-w-none leading-relaxed bg-gray-50 p-4 rounded-2xl rounded-tl-sm w-fit border border-gray-100">
+                            <div class="flex items-center gap-2 text-gray-400">
+                                <span class="w-2 h-2 bg-gray-300 rounded-full animate-bounce"></span>
+                                <span class="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                                <span class="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+           
+            document.getElementById('chatContainer').appendChild(div);
+            lucide.createIcons();
+           
+            return {
+                msgDiv: div,
+                thinkingContainer: document.getElementById(`thinking-${id}`),
+                thoughtDiv: document.getElementById(`thoughts-${id}`),
+                contentDiv: document.getElementById(`content-${id}`)
+            };
+        }
+        function scrollToBottom() {
+            const container = document.getElementById('chatContainer');
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+        // --- Core API Streaming Logic ---
+        async function streamGeminiResponse(prompt, attachment, elements) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:streamGenerateContent?alt=sse&key=${API_KEY}`;
+           
+            const includeThinking = activeTools.thinking || activeTools.search || activeTools.url;
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                },
+                tools: []
+            };
+            if (includeThinking) {
+                payload.generationConfig.thinkingConfig = { includeThoughts: true };
+            }
+            if (attachment) {
+                payload.contents[0].parts.push({
+                    inline_data: {
+                        mime_type: attachment.mimeType,
+                        data: attachment.data
+                    }
+                });
+            }
+            if (activeTools.search) payload.tools.push({ google_search: {} });
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                const errorBody = await response.json();
+                throw new Error(errorBody.error?.message || `API Error: ${response.status}`);
+            }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+           
+            let accumulatedText = "";
+            let accumulatedThoughts = "";
+            let isFirstChunk = true;
+            let thoughtStarted = false;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunkText = decoder.decode(value, { stream: true });
+                const lines = chunkText.split('\n');
+               
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const jsonStr = line.substring(6);
+                            if (jsonStr.trim() === '[DONE]') continue;
+                           
+                            const data = JSON.parse(jsonStr);
+                            const candidate = data.candidates?.[0];
+                           
+                            if (candidate?.content?.parts) {
+                               
+                                for (const part of candidate.content.parts) {
+                                   
+                                    // Handling Thoughts & Tool Use
+                                    if (part.thought === true) {
+                                        if (includeThinking && !thoughtStarted) {
+                                            elements.thinkingContainer.classList.remove('hidden');
+                                            elements.thinkingContainer.classList.add('block');
+                                            elements.thoughtDiv.classList.remove('hidden');
+                                            elements.thoughtDiv.innerHTML = ''; // Clear initial search status
+                                            thoughtStarted = true;
+                                        }
+                                        accumulatedThoughts += part.text;
+                                        elements.thoughtDiv.innerHTML = marked.parse(accumulatedThoughts);
+                                        elements.thoughtDiv.scrollTop = elements.thoughtDiv.scrollHeight;
+                                    }
+                                   
+                                    // Handling Standard Text
+                                    else if (part.text) {
+                                        if (isFirstChunk) {
+                                            elements.contentDiv.innerHTML = ""; // Clear loading dots
+                                            isFirstChunk = false;
+                                        }
+                                        accumulatedText += part.text;
+                                        elements.contentDiv.innerHTML = marked.parse(accumulatedText);
+                                    }
+                                }
+                                scrollToBottom();
+                            }
+                        } catch (e) {
+                            // console.error("Error parsing chunk:", e, line);
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
