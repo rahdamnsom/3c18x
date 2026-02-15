@@ -32,5 +32,8 @@ RUN npm run build
 # Expose the port
 EXPOSE 3000
 
+# Set hostname to 0.0.0.0 to ensure accessibility
+ENV HOSTNAME "0.0.0.0"
+
 # Start the application
 CMD ["npm", "start"]
