@@ -35,5 +35,5 @@ EXPOSE 3000
 # Set hostname to 0.0.0.0 to ensure accessibility
 ENV HOSTNAME "0.0.0.0"
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application on the dynamic port (Railway assigns $PORT)
+CMD ["sh", "-c", "npm start -- -p ${PORT:-3000}"]
